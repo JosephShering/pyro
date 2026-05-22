@@ -1,4 +1,6 @@
-mod player_character_body;
+mod component;
+mod interaction;
+mod player;
 mod utility_ai;
 use godot::prelude::*;
 
