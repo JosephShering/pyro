@@ -13,5 +13,6 @@ impl INode for Interactable {}
 
 #[godot_api]
 impl Interactable {
+    #[func(virtual)]
     pub fn interact(&mut self) {}
 }

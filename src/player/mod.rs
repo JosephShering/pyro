@@ -1,1 +1,1 @@
-mod player_character_body;
+pub mod player_character_body;

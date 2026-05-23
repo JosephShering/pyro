@@ -1,2 +1,2 @@
-mod interactable;
-mod interactor;
+pub mod interactable;
+pub mod interactor;

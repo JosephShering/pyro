@@ -16,6 +16,9 @@ pub struct PlayerCharacterBody {
     acceleration: f64,
 
     #[export]
+    friction: f64,
+
+    #[export]
     air_acceleration: f64,
 
     #[export]
@@ -73,12 +76,13 @@ impl ICharacterBody3D for PlayerCharacterBody {
     fn init(base: Base<CharacterBody3D>) -> Self {
         Self {
             move_speed: 4.0,
-            acceleration: 10.0,
+            acceleration: 5.0,
+            friction: 5.0,
             air_acceleration: 1.0,
-            air_friction: 1.0,
+            air_friction: 0.25,
             jump_height: 1.1,
             time_to_peak: 0.5,
-            time_to_ground: 0.5,
+            time_to_ground: 0.42,
             step_height: 0.25,
             max_floor_angle: 45.0,
             min_look_angle: -89.0,
@@ -110,7 +114,8 @@ impl ICharacterBody3D for PlayerCharacterBody {
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if let Ok(mouse_motion) = event.try_cast::<InputEventMouseMotion>() {
-            self.mouse_movement = mouse_motion.get_relative() * Vector2::new(0.03, 0.03);
+            let modifier = Vector2::new(0.015, 0.011);
+            self.mouse_movement = mouse_motion.get_relative() * modifier;
         }
     }
 
@@ -120,6 +125,7 @@ impl ICharacterBody3D for PlayerCharacterBody {
         self.fall(delta);
         self.update_velocity(delta);
         self.rotate_camera();
+        self.handle_jump();
 
         self.base_mut().move_and_slide();
     }
@@ -127,7 +133,6 @@ impl ICharacterBody3D for PlayerCharacterBody {
 
 #[godot_api]
 impl PlayerCharacterBody {
-    // Signals replace the C# `event EventHandler`s.
     #[signal]
     fn on_land();
 
@@ -139,6 +144,12 @@ impl PlayerCharacterBody {
             self.time_to_peak
         } else {
             self.time_to_ground
+        }
+    }
+
+    fn handle_jump(&mut self) {
+        if Input::singleton().is_action_just_pressed("jump") && self.base().is_on_floor() {
+            self.jump();
         }
     }
 
@@ -154,8 +165,8 @@ impl PlayerCharacterBody {
         self.input_direction =
             input.get_vector("move_left", "move_right", "move_forward", "move_backward");
 
-        let basis = self.base().get_transform().basis;
-        let world_3d = basis * Vector3::new(self.input_direction.x, 0.0, self.input_direction.y);
+        let world_3d = self.base().get_global_basis()
+            * Vector3::new(self.input_direction.x, 0.0, self.input_direction.y);
         self.world_input_direction = Vector2::new(world_3d.x, world_3d.z);
     }
 
@@ -178,11 +189,21 @@ impl PlayerCharacterBody {
         let current_velocity_3d = self.base().get_velocity();
         let current_velocity = Vector2::new(current_velocity_3d.x, current_velocity_3d.z);
 
-        let acceleration = if self.base().is_on_floor() {
-            self.acceleration
+        let mut acceleration = if self.wish_velocity.length() == 0.0 {
+            if self.base().is_on_floor() {
+                self.friction
+            } else {
+                self.air_friction
+            }
         } else {
-            self.air_acceleration
+            if self.base().is_on_floor() {
+                self.acceleration
+            } else {
+                self.air_acceleration
+            }
         };
+
+        acceleration = acceleration / delta;
 
         let next_velocity =
             current_velocity.move_toward(self.wish_velocity, (delta * acceleration) as f32);
@@ -196,9 +217,7 @@ impl PlayerCharacterBody {
     fn rotate_camera(&mut self) {
         let horizontal = self.mouse_movement.x;
         if !is_zero_approx(horizontal as f64) {
-            if let Some(gimbal) = self.gimbal.as_mut() {
-                gimbal.rotate_y(-horizontal);
-            }
+            self.base_mut().rotate_y(-horizontal);
         }
 
         let vertical = self.mouse_movement.y;
@@ -223,7 +242,6 @@ impl PlayerCharacterBody {
         let step_height = self.step_height as f32;
         let margin = 0.01_f32;
 
-        // We need the radius first; grab it before we mutably borrow the raycasts.
         let radius = self
             .collision_shape
             .as_ref()

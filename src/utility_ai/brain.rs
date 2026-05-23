@@ -1,10 +1,14 @@
 use godot::prelude::*;
 
-use crate::utility_ai::action::Action;
+use crate::utility_ai::{action::Action, blackboard::Blackboard};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct Brain {
+    #[export]
+    blackboard: OnEditor<Gd<Blackboard>>,
+
+    #[export]
     actions: Array<Gd<Action>>,
 
     pub window: Dictionary<GString, f32>,
@@ -17,13 +21,13 @@ impl INode for Brain {}
 #[godot_api]
 impl Brain {
     #[func]
-    fn run(&mut self) -> GString {
+    pub fn run(&mut self) -> GString {
         let scores: Vec<(GString, f32)> = self
             .actions
             .iter_shared()
             .map(|action| {
-                let action_name = action.bind().get_action_name().clone();
-                let score = action.bind().run().clone();
+                let action_name = action.bind().action_name.clone();
+                let score = action.bind().run(&self.blackboard);
 
                 (action_name, score)
             })

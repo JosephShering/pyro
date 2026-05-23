@@ -1,15 +1,12 @@
 use godot::prelude::*;
 
-use crate::utility_ai::consideration::Consideration;
+use crate::utility_ai::{blackboard::Blackboard, consideration::Consideration};
 
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(base=Resource)]
 pub struct Action {
     #[export]
-    key: GString,
-
-    #[export]
-    blackboard: Dictionary<GString, f32>,
+    pub action_name: GString,
 
     #[export]
     considerations: Array<Gd<Consideration>>,
@@ -18,18 +15,28 @@ pub struct Action {
 }
 
 #[godot_api]
-impl IResource for Action {}
+impl IResource for Action {
+    fn init(base: Base<Resource>) -> Self {
+        Self {
+            action_name: GString::from(""),
+            considerations: Array::new(),
+            base,
+        }
+    }
+}
 
 #[godot_api]
 impl Action {
-    pub fn get_action_name(&self) -> &GString {
-        &self.key
-    }
-
-    pub fn run(&self) -> f32 {
-        self.considerations
+    pub fn run(&self, blackboard: &Gd<Blackboard>) -> f32 {
+        let score: f32 = self
+            .considerations
             .iter_shared()
-            .map(|consideration| consideration.bind().get_value(self.blackboard.clone()))
-            .product()
+            // .filter(|consideration| consideration.clone().try_cast::<Consideration>().is_ok())
+            .map(|consideration| consideration.bind().get_value(&blackboard))
+            .product();
+
+        let num_considerations = self.considerations.len();
+        let mod_factor = 1.0 - (1.0 / num_considerations as f32);
+        score + ((1.0 - score) * mod_factor * score)
     }
 }

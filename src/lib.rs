@@ -1,4 +1,5 @@
 mod component;
+mod enemies;
 mod interaction;
 mod player;
 mod utility_ai;

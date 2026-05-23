@@ -22,6 +22,7 @@ impl INode for Interactor {}
 
 #[godot_api]
 impl Interactor {
+    #[func]
     fn interact(&self) {
         for ray in self.rays.iter_shared() {
             if !ray.is_colliding() {
