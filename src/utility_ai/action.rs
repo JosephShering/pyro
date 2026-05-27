@@ -31,7 +31,6 @@ impl Action {
         let score: f32 = self
             .considerations
             .iter_shared()
-            // .filter(|consideration| consideration.clone().try_cast::<Consideration>().is_ok())
             .map(|consideration| consideration.bind().get_value(&blackboard))
             .product();
 

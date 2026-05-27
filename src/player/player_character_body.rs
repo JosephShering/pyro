@@ -1,7 +1,7 @@
 use godot::classes::input::MouseMode;
 use godot::classes::{
-    CapsuleShape3D, CharacterBody3D, CollisionShape3D, ICharacterBody3D, Input, InputEvent,
-    InputEventMouseMotion, RayCast3D,
+    CharacterBody3D, CollisionShape3D, ICharacterBody3D, Input, InputEvent, InputEventMouseMotion,
+    PhysicsServer3D, PhysicsTestMotionParameters3D, PhysicsTestMotionResult3D, RayCast3D,
 };
 use godot::global::is_zero_approx;
 use godot::prelude::*;
@@ -34,10 +34,7 @@ pub struct PlayerCharacterBody {
     time_to_ground: f64,
 
     #[export]
-    step_height: f64,
-
-    #[export]
-    max_floor_angle: f64,
+    step_height: f32,
 
     #[export]
     min_look_angle: f32,
@@ -84,7 +81,6 @@ impl ICharacterBody3D for PlayerCharacterBody {
             time_to_peak: 0.5,
             time_to_ground: 0.42,
             step_height: 0.25,
-            max_floor_angle: 45.0,
             min_look_angle: -89.0,
             max_look_angle: 89.0,
 
@@ -128,6 +124,8 @@ impl ICharacterBody3D for PlayerCharacterBody {
         self.handle_jump();
 
         self.base_mut().move_and_slide();
+
+        self.handle_snapping();
     }
 }
 
@@ -167,6 +165,7 @@ impl PlayerCharacterBody {
 
         let world_3d = self.base().get_global_basis()
             * Vector3::new(self.input_direction.x, 0.0, self.input_direction.y);
+
         self.world_input_direction = Vector2::new(world_3d.x, world_3d.z);
     }
 
@@ -237,30 +236,42 @@ impl PlayerCharacterBody {
         self.mouse_movement = Vector2::ZERO;
     }
 
-    #[allow(dead_code)]
-    fn setup_step_raycasts(&mut self) {
-        let step_height = self.step_height as f32;
-        let margin = 0.01_f32;
+    fn handle_snapping(&mut self) {
+        let below_raycast = self.below_raycast.as_ref().unwrap();
+        let is_colliding = below_raycast.is_colliding();
+        let is_too_steep = self.is_surface_too_steep(below_raycast.get_collision_normal());
+        let velocity = self.base().get_velocity();
 
-        let radius = self
-            .collision_shape
-            .as_ref()
-            .and_then(|cs| cs.get_shape())
-            .and_then(|s| s.try_cast::<CapsuleShape3D>().ok())
-            .map(|c| c.get_radius())
-            .unwrap_or(0.0);
+        if !is_too_steep && is_colliding && !self.base().is_on_floor() && velocity.y <= 0.0 {
+            if let Some(result) = self.test_body() {
+                let mut position = self.base().get_position();
+                position.y += result.get_travel().y;
 
-        if let Some(below) = self.below_raycast.as_mut() {
-            below.set_target_position(Vector3::new(0.0, -step_height, 0.0));
-        }
-
-        if let Some(ahead) = self.ahead_raycast.as_mut() {
-            ahead.set_target_position(Vector3::new(0.0, -step_height, 0.0));
-            ahead.set_position(Vector3::new(0.0, step_height + margin, -radius + margin));
+                let mut b = self.base_mut();
+                b.set_position(position);
+                b.apply_floor_snap();
+            }
         }
     }
 
-    #[allow(dead_code)]
+    fn test_body(&self) -> Option<Gd<PhysicsTestMotionResult3D>> {
+        let mut params = PhysicsTestMotionParameters3D::new_gd();
+        params.set_from(self.base().get_global_transform());
+        params.set_motion(Vector3::new(0.0, -self.step_height, 0.0));
+
+        let result = PhysicsTestMotionResult3D::new_gd();
+
+        if PhysicsServer3D::singleton()
+            .body_test_motion_ex(self.base().get_rid(), &params)
+            .result(&result)
+            .done()
+        {
+            return Some(result);
+        } else {
+            return None;
+        }
+    }
+
     fn is_surface_too_steep(&self, normal: Vector3) -> bool {
         normal.angle_to(Vector3::UP) > self.base().get_floor_max_angle()
     }

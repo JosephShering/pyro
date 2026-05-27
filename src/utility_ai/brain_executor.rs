@@ -36,9 +36,9 @@ impl INode for BrainExecutor {
 
         while self.time > self.timeout() {
             self.time -= self.timeout();
+
             let brain = self.brain.as_mut().unwrap();
-            let choice = brain.bind_mut().run();
-            godot_print!("{choice}");
+            self.choice = brain.bind_mut().run();
         }
     }
 }

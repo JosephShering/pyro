@@ -9,3 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 glam = "0.33.0"
 godot = "0.5.3"
+proc-macro2 = "1.0.106"
+quote = "1.0.45"
+syn = { version = "2.0.117", features = ["full"] }
