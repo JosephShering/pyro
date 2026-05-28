@@ -2,7 +2,7 @@ use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
-pub struct Blackboard {
+pub struct PyroUtilBlackboard {
     #[export]
     pub data: Dictionary<GString, f32>,
 
@@ -10,7 +10,7 @@ pub struct Blackboard {
 }
 
 #[godot_api]
-impl IResource for Blackboard {}
+impl IResource for PyroUtilBlackboard {}
 
 #[godot_api]
-impl Blackboard {}
+impl PyroUtilBlackboard {}

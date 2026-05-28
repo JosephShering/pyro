@@ -1,10 +1,11 @@
 use godot::prelude::*;
 
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(init, tool, base=Resource)]
 pub struct Blackboard {
     #[export]
     pub data: Dictionary<StringName, bool>,
+
     base: Base<Resource>,
 }
 
@@ -12,4 +13,7 @@ pub struct Blackboard {
 impl IResource for Blackboard {}
 
 #[godot_api]
-impl Blackboard {}
+impl Blackboard {
+    #[signal]
+    pub fn on_changed();
+}

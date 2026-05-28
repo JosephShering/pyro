@@ -1,12 +1,12 @@
 use godot::prelude::*;
 
-use crate::utility_ai::{action::Action, blackboard::Blackboard};
+use crate::utility_ai::{action::Action, blackboard::PyroUtilBlackboard};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct Brain {
     #[export]
-    blackboard: OnEditor<Gd<Blackboard>>,
+    blackboard: OnEditor<Gd<PyroUtilBlackboard>>,
 
     #[export]
     actions: Array<Gd<Action>>,

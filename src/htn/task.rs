@@ -1,9 +1,9 @@
 use godot::prelude::*;
 
-use crate::htn::{Plan, blackboard::Blackboard, is_met, operator::Operator};
+use crate::htn::{DecomposeType, Plan, blackboard::Blackboard, is_met, operator::Operator};
 
 #[derive(GodotClass)]
-#[class(init, base=Resource)]
+#[class(init, tool, base=Resource)]
 pub struct Task {
     #[export]
     preconditions: Dictionary<StringName, bool>,
@@ -22,14 +22,18 @@ impl IResource for Task {}
 
 #[godot_dyn]
 impl Plan for Task {
-    fn decompose(&self, _blackboard: Gd<Blackboard>) -> Array<Gd<Operator>> {
+    fn decompose(&self, mut blackboard: Gd<Blackboard>) -> DecomposeType {
         let mut arr = Array::new();
         arr.push(&self.operator.clone());
 
-        return arr;
+        for (effect_key, effect_value) in self.effects.iter_shared() {
+            blackboard.bind_mut().data.set(&effect_key, effect_value);
+        }
+
+        return (arr, blackboard);
     }
 
-    fn is_met(&self, blackboard: Gd<Blackboard>) -> bool {
+    fn is_met(&self, blackboard: &Gd<Blackboard>) -> bool {
         is_met(&self.preconditions, blackboard)
     }
 }

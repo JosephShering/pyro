@@ -1,6 +1,6 @@
 use godot::{classes::Curve, prelude::*};
 
-use crate::utility_ai::blackboard::Blackboard;
+use crate::utility_ai::blackboard::PyroUtilBlackboard;
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
@@ -31,7 +31,7 @@ impl IResource for Consideration {
 
 #[godot_api]
 impl Consideration {
-    pub fn get_value(&self, blackboard: &Gd<Blackboard>) -> f32 {
+    pub fn get_value(&self, blackboard: &Gd<PyroUtilBlackboard>) -> f32 {
         match blackboard.bind().data.get(&self.key) {
             Some(value) => {
                 let normalized_value = value.clamp(0.0, self.max) / self.max;
