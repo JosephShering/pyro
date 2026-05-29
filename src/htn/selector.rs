@@ -1,6 +1,8 @@
 use godot::prelude::*;
 
-use crate::htn::{DecomposeType, Plan, blackboard::Blackboard, is_met, sequence::Sequence};
+use crate::htn::{
+    BlackboardData, DecomposeType, Plan, blackboard::Blackboard, is_met, sequence::Sequence,
+};
 
 #[derive(GodotClass)]
 #[class(init, tool, base=Resource)]
@@ -16,14 +18,14 @@ pub struct Selector {
 
 #[godot_dyn]
 impl Plan for Selector {
-    fn decompose(&self, blackboard: Gd<Blackboard>) -> DecomposeType {
+    fn decompose(&self, blackboard: BlackboardData) -> DecomposeType {
         for sequence in self.sequences.iter_shared() {
             let is_met = sequence.bind().is_met(&blackboard);
             if !is_met {
                 return (Array::new(), blackboard);
             }
 
-            let new_blackboard = blackboard.duplicate_resource();
+            let new_blackboard = blackboard.duplicate_deep();
             let (child_operators, bb) = sequence.bind().decompose(new_blackboard);
 
             if child_operators.is_empty() {
@@ -36,7 +38,7 @@ impl Plan for Selector {
         return (Array::new(), blackboard);
     }
 
-    fn is_met(&self, blackboard: &Gd<Blackboard>) -> bool {
+    fn is_met(&self, blackboard: &BlackboardData) -> bool {
         is_met(&self.preconditions, blackboard)
     }
 }

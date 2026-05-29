@@ -5,23 +5,21 @@ pub mod selector;
 pub mod sequence;
 pub mod task;
 
-use std::collections::HashMap;
-
 use godot::prelude::*;
 
-use crate::htn::{blackboard::Blackboard, operator::Operator};
+use crate::htn::operator::operator::Operator;
 
-pub type BlackboardData = HashMap<StringName, bool>;
-pub type DecomposeType = (Array<Gd<Operator>>, Gd<Blackboard>);
+pub type BlackboardData = Dictionary<StringName, bool>;
+pub type DecomposeType = (Array<Gd<Operator>>, BlackboardData);
 
 pub trait Plan {
-    fn is_met(&self, blackboard: &Gd<Blackboard>) -> bool;
-    fn decompose(&self, blackboard: Gd<Blackboard>) -> DecomposeType;
+    fn is_met(&self, blackboard: &BlackboardData) -> bool;
+    fn decompose(&self, blackboard: BlackboardData) -> DecomposeType;
 }
 
-fn is_met(preconditions: &Dictionary<StringName, bool>, blackboard: &Gd<Blackboard>) -> bool {
+fn is_met(preconditions: &Dictionary<StringName, bool>, blackboard: &BlackboardData) -> bool {
     for (key, value) in preconditions {
-        if let Some(bb_value) = blackboard.bind().data.get(&key) {
+        if let Some(bb_value) = blackboard.get(&key) {
             if bb_value != value {
                 return false;
             }

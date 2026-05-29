@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::htn::{DecomposeType, Plan, blackboard::Blackboard, is_met, operator::Operator};
+use crate::htn::{BlackboardData, DecomposeType, Plan, is_met, operator::operator::Operator};
 
 #[derive(GodotClass)]
 #[class(init, tool, base=Resource)]
@@ -22,18 +22,18 @@ impl IResource for Task {}
 
 #[godot_dyn]
 impl Plan for Task {
-    fn decompose(&self, mut blackboard: Gd<Blackboard>) -> DecomposeType {
+    fn decompose(&self, mut blackboard: BlackboardData) -> DecomposeType {
         let mut arr = Array::new();
         arr.push(&self.operator.clone());
 
         for (effect_key, effect_value) in self.effects.iter_shared() {
-            blackboard.bind_mut().data.set(&effect_key, effect_value);
+            blackboard.set(&effect_key, effect_value);
         }
 
         return (arr, blackboard);
     }
 
-    fn is_met(&self, blackboard: &Gd<Blackboard>) -> bool {
+    fn is_met(&self, blackboard: &BlackboardData) -> bool {
         is_met(&self.preconditions, blackboard)
     }
 }

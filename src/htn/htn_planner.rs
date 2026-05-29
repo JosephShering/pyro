@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-
 use godot::prelude::*;
 
-use crate::htn::{
-    BlackboardData, Plan, blackboard::Blackboard, operator::Operator, selector::Selector,
-};
+use crate::htn::{Plan, blackboard::Blackboard, operator::operator::Operator, selector::Selector};
 
 #[derive(GodotClass)]
 #[class(init, tool, base=Node)]
@@ -19,7 +15,7 @@ struct HtnPlanner {
     pub operators: Array<Gd<Operator>>,
 
     #[export_tool_button(fn = Self::do_plan)]
-    thing: PhantomVar<Callable>,
+    TestMyCode: PhantomVar<Callable>,
 
     base: Base<Node>,
 }
@@ -40,11 +36,11 @@ impl INode for HtnPlanner {
 #[godot_api]
 impl HtnPlanner {
     fn plan(&mut self) {
-        if let Some(blackboard) = self.blackboard.clone() {
-            let (operators, _new_hashmap) = self.selector.bind().decompose(blackboard);
-            if operators.len() > 0 {
-                self.operators = operators;
-            }
+        if let Some(blackboard) = &self.blackboard {
+            let data = blackboard.bind().data.duplicate_deep();
+            let (operators, _new_hashmap) = self.selector.bind().decompose(data);
+
+            self.operators = operators;
         }
     }
 
@@ -60,13 +56,3 @@ impl HtnPlanner {
         godot_print!("{op}");
     }
 }
-
-// fn to_hashmap(blackboard: Gd<Blackboard>) -> BlackboardData {
-//     let mut hashmap: BlackboardData = HashMap::new();
-
-//     for (key, value) in &blackboard.bind().data {
-//         hashmap.insert(key, value);
-//     }
-
-//     return hashmap;
-// }
