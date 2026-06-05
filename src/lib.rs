@@ -4,7 +4,6 @@ mod interaction;
 mod inventory;
 mod level;
 mod player;
-mod statechart;
 mod utility_ai;
 use godot::prelude::*;
 
