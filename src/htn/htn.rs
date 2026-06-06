@@ -5,7 +5,7 @@ use crate::htn::{
     value::Value,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ArithmeticOp {
     Eq,
     Add,
@@ -14,7 +14,7 @@ pub enum ArithmeticOp {
     Div,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Effect {
     blackboard_key: String,
     op: ArithmeticOp,
@@ -31,7 +31,7 @@ impl Effect {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Task {
     Selector {
         preconditions: Vec<Condition>,
@@ -152,20 +152,6 @@ mod tests {
         };
     }
 
-    // macro_rules! all {
-    //     ($($c:expr),+ $(,)?) => { Condition::All(vec![$($c),+]) };
-    // }
-
-    // macro_rules! any {
-    //     ($($c:expr),+ $(,)?) => { Condition::Any(vec![$($c),+]) };
-    // }
-
-    // macro_rules! not {
-    //     ($c:expr) => {
-    //         Condition::Not(Box::new($c))
-    //     };
-    // }
-
     macro_rules! effect {
         ($key:literal = $val:expr) => {
             Effect::new($key, ArithmeticOp::Eq, Value::from($val))
@@ -188,10 +174,10 @@ mod tests {
         ($name:literal) => {
             Task::Action{preconditions: vec![], effects: vec![], action: $name.to_string()}
         };
-        ($name:literal, when = [$($cond:expr),* $(,)?]) => {
+        ($name:literal, conditions = [$($cond:expr),* $(,)?]) => {
             Task::Action{preconditions: vec![$($cond),*], effects: vec![], action: $name.to_string()}
         };
-        ($name:literal, when = [$($cond:expr),* $(,)?], effects = [$($eff:expr),* $(,)?]) => {
+        ($name:literal, conditions = [$($cond:expr),* $(,)?], effects = [$($eff:expr),* $(,)?]) => {
             Task::Action{preconditions: vec![$($cond),*], effects: vec![$($eff),*], action: $name.to_string()}
         };
     }
@@ -204,7 +190,7 @@ mod tests {
 
     macro_rules! sequence {
         (conditions = [$($cond:expr),* $(,)?], tasks = [$($child:expr),* $(,)?]) => {
-            Task::Selector{preconditions: vec![$($cond),*], tasks: vec![$($child),*]}
+            Task::Sequence{preconditions: vec![$($cond),*], tasks: vec![$($child),*]}
         };
     }
 
@@ -220,14 +206,14 @@ mod tests {
     fn simple_htn() {
         let mut blackboard = blackboard! {
             "health" => 40,
-            "has_health_item" => false
+            "has_heal_item" => true
         };
 
         let root = selector!(
             conditions = [],
             tasks = [action!(
                 "heal",
-                when = [cond!("health" < 50), cond!("has_heal_item" == true),]
+                conditions = [cond!("health" < 50), cond!("has_heal_item" == true)]
             ),]
         );
 
@@ -268,15 +254,18 @@ mod tests {
             tasks = [
                 action!(
                     "put_clothes_in_machine",
-                    when = [cond!("has_dirty_laundry" == true)],
+                    conditions = [cond!("has_dirty_laundry" == true)],
                     effects = [effect!("clothes_in" = true)]
                 ),
                 action!(
                     "put_in_detergent",
-                    when = [cond!("clothes_in" == true), cond!("has_detergent" == true)],
+                    conditions = [cond!("clothes_in" == true), cond!("has_detergent" == true)],
                     effects = [effect!("has_detergent" = false)]
                 ),
-                action!("turn_machine_on", when = [cond!("clothes_in" == true)]),
+                action!(
+                    "turn_machine_on",
+                    conditions = [cond!("clothes_in" == true)]
+                ),
                 selector!(conditions = [], tasks = [action!("do_nothing")]),
                 sequence!(conditions = [], tasks = []),
                 sequence!(conditions = [], tasks = []),

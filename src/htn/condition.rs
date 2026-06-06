@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::htn::value::Value;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ComparisonOp {
     E,
     NE,
@@ -12,7 +12,7 @@ pub enum ComparisonOp {
     LTE,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Condition {
     Compare {
         blackboard_key: String,

@@ -3,7 +3,16 @@
     "allow": [
       "Bash(cargo check *)",
       "Read(//c/Users/josep/.cargo/registry/src/**)",
-      "Bash(grep -n 'to_slice\\\\|pub fn padded\\\\|pub fn separated_by\\\\|pub fn delimited_by\\\\|pub fn foldl\\\\|allow_trailing' __TRACKED_VAR__/src/combinator.rs __TRACKED_VAR__/src/lib.rs)"
+      "Bash(grep -n 'to_slice\\\\|pub fn padded\\\\|pub fn separated_by\\\\|pub fn delimited_by\\\\|pub fn foldl\\\\|allow_trailing' __TRACKED_VAR__/src/combinator.rs __TRACKED_VAR__/src/lib.rs)",
+      "Bash(grep -n 'pub use\\\\|pub mod prelude' __TRACKED_VAR__/src/lib.rs)",
+      "Bash(D=$\\(ls -d ~/.cargo/registry/src/*/chumsky-0.13*\\); sed -n '/pub mod prelude/,/^}/p' \"$D/src/lib.rs\" | head -60)",
+      "Bash(grep -rn 'pub fn keyword' __TRACKED_VAR__/src/text.rs)",
+      "Bash(grep -n 'fn foldr\\\\b' __TRACKED_VAR__/src/lib.rs)",
+      "Bash(grep -n 'fn at_least\\\\b\\\\|fn collect\\\\b\\\\|fn or_not\\\\b' __TRACKED_VAR__/src/lib.rs)",
+      "Bash(sed -n 535,560p __TRACKED_VAR__/src/text.rs)",
+      "Bash(grep -n 'pub fn at_least' __TRACKED_VAR__/src/combinator.rs)",
+      "Bash(cargo test *)",
+      "Bash(git stash *)"
     ]
   }
 }

@@ -8,10 +8,6 @@ pub enum Value {
     String(String),
 }
 
-pub fn add(a: Value, b: Value) -> Value {
-    a + b
-}
-
 macro_rules! impl_arith {
     ($trait:ident, $method:ident, $op:tt) => {
         impl $trait for Value {
