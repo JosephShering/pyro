@@ -1,0 +1,29 @@
+selector {
+    action "use_heal_item" (health < 40) (has_heal_item == true)
+    selector (in_town == true) {
+        sequence (energy < 40) {
+            action "go_to_sleep"
+        }
+    }
+    selector {
+        selector (in_combat == true) {
+            action "find_cover" (in_cover == false) [
+                in_cover = true
+            ]
+            action "shoot_at_player" (in_cover == true)
+        }
+    }
+    action "setup_camp" (hour < 6 or hour > 16)
+    sequence (health < 40) (has_heal_item == false) (in_town == true) {
+        action "go_to_store"
+        action "buy_heal_item"
+        actionn "use_heal_item"
+    }
+    sequence (energy < false) {
+        action "go_home" [
+            is_home = true,
+            is_outside = false
+        ]
+        action "go_to_sleep"
+    }
+}

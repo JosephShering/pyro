@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo check *)"
+      "Bash(cargo check *)",
+      "Read(//c/Users/josep/.cargo/registry/src/**)",
+      "Bash(grep -n 'to_slice\\\\|pub fn padded\\\\|pub fn separated_by\\\\|pub fn delimited_by\\\\|pub fn foldl\\\\|allow_trailing' __TRACKED_VAR__/src/combinator.rs __TRACKED_VAR__/src/lib.rs)"
     ]
   }
 }
