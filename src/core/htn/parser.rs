@@ -26,9 +26,9 @@
 
 use chumsky::prelude::*;
 
-use crate::htn::{
+use super::{
+    ArithmeticOp, Effect, Task,
     condition::{ComparisonOp, Condition},
-    htn::{ArithmeticOp, Effect, Task},
     value::Value,
 };
 
@@ -90,17 +90,11 @@ fn condition<'a>() -> impl Parser<'a, &'a str, Condition, Extra<'a>> + Clone {
     recursive(|cond| {
         let ident = text::ascii::ident().padded();
 
-        let comparison = ident
-            .then(comparison_op())
-            .then(value().padded())
-            .map(|((key, op), val): ((&str, ComparisonOp), Value)| {
-                Condition::compare(key, op, val)
-            });
+        let comparison = ident.then(comparison_op()).then(value().padded()).map(
+            |((key, op), val): ((&str, ComparisonOp), Value)| Condition::compare(key, op, val),
+        );
 
-        let atom = choice((
-            comparison,
-            cond.delimited_by(just('('), just(')')).padded(),
-        ));
+        let atom = choice((comparison, cond.delimited_by(just('('), just(')')).padded()));
 
         // `not` binds tightest: any number of leading `not`s flip the atom.
         let not = text::ascii::keyword("not")
@@ -136,9 +130,7 @@ fn condition<'a>() -> impl Parser<'a, &'a str, Condition, Extra<'a>> + Clone {
 
 /// The full grammar, producing the root [`Task`].
 fn parser<'a>() -> impl Parser<'a, &'a str, Task, Extra<'a>> {
-    let precondition = condition()
-        .delimited_by(just('('), just(')'))
-        .padded();
+    let precondition = condition().delimited_by(just('('), just(')')).padded();
 
     let eff_op = choice((
         just("+=").to(ArithmeticOp::Add),
@@ -280,7 +272,10 @@ mod tests {
 
     #[test]
     fn parses_bare_action() {
-        assert_eq!(parse(r#"action "go_to_sleep""#).unwrap(), action("go_to_sleep"));
+        assert_eq!(
+            parse(r#"action "go_to_sleep""#).unwrap(),
+            action("go_to_sleep")
+        );
     }
 
     #[test]
@@ -301,10 +296,8 @@ mod tests {
 
     #[test]
     fn parses_all_comparison_operators() {
-        let got = parse(
-            r#"action "a" (a == 1) (b != 2) (c < 3) (d > 4) (e <= 5) (f >= 6)"#,
-        )
-        .unwrap();
+        let got =
+            parse(r#"action "a" (a == 1) (b != 2) (c < 3) (d > 4) (e <= 5) (f >= 6)"#).unwrap();
         assert_eq!(
             got,
             Task::Action {
@@ -348,10 +341,7 @@ mod tests {
 
     #[test]
     fn parses_all_effect_operators() {
-        let got = parse(
-            r#"action "a" [ a = 1, b += 2, c -= 3, d *= 4, e /= 5 ]"#,
-        )
-        .unwrap();
+        let got = parse(r#"action "a" [ a = 1, b += 2, c -= 3, d *= 4, e /= 5 ]"#).unwrap();
         assert_eq!(
             got,
             Task::Action {

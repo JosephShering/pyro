@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::htn::value::Value;
+use crate::core::htn::value::Value;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ComparisonOp {

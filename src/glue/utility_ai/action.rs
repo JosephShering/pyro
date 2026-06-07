@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::utility_ai::{blackboard::PyroUtilBlackboard, consideration::Consideration};
+use crate::glue::utility_ai::{blackboard::PyroUtilBlackboard, consideration::Consideration};
 
 #[derive(GodotClass)]
 #[class(base=Resource)]

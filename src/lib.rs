@@ -1,10 +1,5 @@
-mod enemies;
-mod htn;
-mod interaction;
-mod inventory;
-mod level;
-mod player;
-mod utility_ai;
+mod core;
+mod glue;
 use godot::prelude::*;
 
 struct Pyro;

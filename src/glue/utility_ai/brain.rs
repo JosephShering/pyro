@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::utility_ai::{action::Action, blackboard::PyroUtilBlackboard};
+use crate::glue::utility_ai::{action::Action, blackboard::PyroUtilBlackboard};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]

@@ -1,6 +1,6 @@
 use godot::{classes::Curve, prelude::*};
 
-use crate::utility_ai::blackboard::PyroUtilBlackboard;
+use crate::glue::utility_ai::blackboard::PyroUtilBlackboard;
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
