@@ -6,7 +6,6 @@ use godot::{
 };
 
 use crate::{core::htn::*, glue::npc::NPCBlackboards};
-// use crate::core::htn::{Task, parser::parse, plan, value::Value};
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
@@ -52,11 +51,15 @@ impl HTN {
         Some(htn)
     }
 
-    pub fn plan(&mut self, key: String) -> Option<Vec<String>> {
+    pub fn plan(&mut self, key: &str) -> Option<Vec<String>> {
         let blackboards = NPCBlackboards::singleton();
         let guard = blackboards.bind();
-        let blackboard = guard.get_blackboard(key)?;
-        let htn = self.htn.as_ref()?;
-        plan(htn, blackboard)
+
+        guard.with_blackboard(key, |data| {
+            let htn = self.htn.as_ref()?;
+            let actions = plan(htn, data)?;
+
+            Some(actions)
+        })?
     }
 }
