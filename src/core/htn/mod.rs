@@ -4,7 +4,10 @@ mod condition;
 mod parser;
 mod value;
 
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, VecDeque},
+};
 
 pub use condition::{ComparisonOp, Condition};
 pub use parser::parse;
@@ -84,9 +87,9 @@ fn apply_effects(effects: &[Effect], data: &mut HashMap<String, Value>) {
     }
 }
 
-pub fn plan(task: &Task, data: &HashMap<String, Value>) -> Option<Vec<String>> {
+pub fn plan(task: &Task, data: &HashMap<String, Value>) -> Option<VecDeque<String>> {
     match decompose(task, data) {
-        Some((plan, _)) => Some(plan),
+        Some((plan, _)) => Some(plan.into()),
         None => None,
     }
 }

@@ -1,16 +1,17 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::collections::VecDeque;
 
 use godot::{
-    classes::{FileAccess, file_access::ModeFlags, notify::ObjectNotification},
+    classes::{FileAccess, file_access::ModeFlags},
     prelude::*,
 };
 
 use crate::{core::htn::*, glue::npc::NPCBlackboards};
 
 #[derive(GodotClass)]
-#[class(base=Resource)]
+#[class(init, base=Resource)]
 pub struct HTN {
-    #[export(file = "*.htn")]
+    #[export(file = "*.txt")]
+    #[var(set = set_file)]
     file: GString,
 
     htn: Option<Task>,
@@ -19,31 +20,19 @@ pub struct HTN {
 }
 
 #[godot_api]
-impl IResource for HTN {
-    fn init(base: Base<Resource>) -> Self {
-        Self {
-            file: GString::from(""),
-            htn: None,
-            base,
-        }
-    }
-
-    fn on_notification(&mut self, what: ObjectNotification) {
-        match what {
-            ObjectNotification::POSTINITIALIZE => {
-                let htn = HTN::load_file(&self.file);
-                match htn {
-                    Some(htn) => self.htn = Some(htn),
-                    None => {}
-                }
-            }
-            _ => {}
-        }
-    }
-}
+impl IResource for HTN {}
 
 #[godot_api]
 impl HTN {
+    #[func]
+    fn set_file(&mut self, file: GString) {
+        self.htn = Self::load_file(&file);
+        if self.htn.is_none() {
+            godot_warn!("Could not load HTN file: {file}");
+        }
+        self.file = file;
+    }
+
     pub fn load_file(file: &GString) -> Option<Task> {
         let file = FileAccess::open(file, ModeFlags::READ)?;
         let text = file.get_as_text();
@@ -51,7 +40,7 @@ impl HTN {
         Some(htn)
     }
 
-    pub fn plan(&mut self, key: &str) -> Option<Vec<String>> {
+    pub fn plan(&mut self, key: &str) -> Option<VecDeque<String>> {
         let blackboards = NPCBlackboards::singleton();
         let guard = blackboards.bind();
 

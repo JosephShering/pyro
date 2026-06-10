@@ -1,4 +1,5 @@
 mod action_library;
+mod actor;
 mod campfire;
 mod enemies;
 mod htn;

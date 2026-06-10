@@ -110,7 +110,7 @@ impl ICharacterBody3D for PlayerCharacterBody {
 
     fn input(&mut self, event: Gd<InputEvent>) {
         if let Ok(mouse_motion) = event.try_cast::<InputEventMouseMotion>() {
-            let modifier = Vector2::new(0.015, 0.011);
+            let modifier = Vector2::new(0.007, 0.007);
             self.mouse_movement = mouse_motion.get_relative() * modifier;
         }
     }

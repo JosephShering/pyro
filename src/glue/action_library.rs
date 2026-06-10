@@ -1,8 +1,4 @@
-use std::sync::Arc;
-
 use godot::prelude::*;
-
-use crate::core::{action::Action, htn::action_library::ActionsRepo};
 
 macro_rules! action_library {
     ( $( $name:literal => $action:expr ),* $(,)? ) => {{
@@ -13,34 +9,60 @@ macro_rules! action_library {
 }
 
 #[derive(GodotClass)]
-#[class(singleton, base=Node)]
+#[class(init, base=Node)]
+pub struct ActionNode {
+    #[export]
+    key: GString,
+
+    base: Base<Node>,
+}
+
+#[godot_api]
+impl ActionNode {
+    #[func(virtual)]
+    pub fn enter(&mut self, data: Dictionary<GString, Variant>) {}
+
+    #[func]
+    pub fn update(&mut self, data: Dictionary<GString, Variant>, _delta: f32) {}
+
+    #[func(virtual)]
+    pub fn exit(&mut self, data: Dictionary<GString, Variant>) {}
+}
+
+#[derive(GodotClass)]
+#[class(init, base=Node)]
 pub struct ActionLibrary {
-    lib: ActionsRepo,
+    actions: Vec<Gd<ActionNode>>,
     base: Base<Node>,
 }
 
 #[godot_api]
 impl INode for ActionLibrary {
-    fn init(base: Base<Node>) -> Self {
-        let go_to_location = Action::start().build();
-        let take_cover = Action::start().build();
-        let shoot_at_target = Action::start().build();
-        let reload = Action::start().build();
-
-        let lib = action_library! {
-            "go_to_location" => go_to_location,
-            "take_cover" => take_cover,
-            "shoot_at_target" => shoot_at_target,
-            "reload" => reload
-        };
-
-        Self { lib, base }
+    fn ready(&mut self) {
+        self.get_actions();
     }
 }
 
 #[godot_api]
 impl ActionLibrary {
-    pub fn get(&self, key: String) -> Option<Arc<Action>> {
-        self.lib.get(&key)
+    pub fn get(&self, name: &str) -> Option<&Gd<ActionNode>> {
+        self.actions.iter().find(|action| action.bind().key == name)
+    }
+
+    pub fn get_mut(&mut self, name: &str) -> Option<&mut Gd<ActionNode>> {
+        self.actions
+            .iter_mut()
+            .find(|action| action.bind().key == name)
+    }
+
+    fn get_actions(&mut self) {
+        self.base().get_children().iter_shared().map(|child| {
+            match child.try_cast::<ActionNode>() {
+                Ok(action) => {
+                    self.actions.push(action);
+                }
+                Err(_) => {}
+            }
+        });
     }
 }
