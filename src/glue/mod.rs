@@ -9,3 +9,4 @@ mod level;
 mod npc;
 mod player;
 mod utility_ai;
+mod value;
