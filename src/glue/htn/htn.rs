@@ -1,11 +1,10 @@
-use std::collections::VecDeque;
-
+use super::npc::NPCBlackboards;
+use crate::core::htn::*;
 use godot::{
     classes::{FileAccess, file_access::ModeFlags},
     prelude::*,
 };
-
-use crate::{core::htn::*, glue::npc::NPCBlackboards};
+use std::collections::VecDeque;
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]

@@ -1,14 +1,10 @@
+use godot::prelude::*;
 use nanoid::nanoid;
+use statig::prelude::*;
+
 use std::collections::VecDeque;
 
-use godot::prelude::*;
-use statig::{
-    Outcome::{self, Handled, Transition},
-    prelude::{IntoStateMachineExt, StateMachine},
-    state_machine,
-};
-
-use crate::glue::{
+use super::{
     action::HTNAction,
     action_library::{ActionLibrary, ActionStatus},
     htn::HTN,
@@ -31,7 +27,7 @@ pub struct Actor {
     thoughts_per_second: f32,
     time: f32,
 
-    id: String,
+    pub id: String,
 
     fsm: Option<StateMachine<ActorStateMachine>>,
 }

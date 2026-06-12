@@ -1,6 +1,7 @@
 use godot::prelude::*;
 
-use crate::glue::{action_library::ActionStatus, blackboard::Blackboard};
+use super::action_library::ActionStatus;
+use super::blackboard::Blackboard;
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]

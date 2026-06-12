@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
+use super::action::HTNAction;
 use godot::prelude::*;
-
-use crate::glue::action::HTNAction;
+use std::collections::HashMap;
 
 #[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
 #[godot(via = u8)]
