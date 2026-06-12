@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::glue::utility_ai::{action::Action, blackboard::PyroUtilBlackboard};
+use crate::glue::utility_ai::{action::UtilityAction, blackboard::PyroUtilBlackboard};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -9,7 +9,7 @@ pub struct Brain {
     blackboard: OnEditor<Gd<PyroUtilBlackboard>>,
 
     #[export]
-    actions: Array<Gd<Action>>,
+    actions: Array<Gd<UtilityAction>>,
 
     pub window: Dictionary<GString, f32>,
     base: Base<Node>,

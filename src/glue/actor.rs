@@ -1,55 +1,113 @@
+use nanoid::nanoid;
 use std::collections::VecDeque;
 
 use godot::prelude::*;
 use statig::{
     Outcome::{self, Handled, Transition},
-    action, state, state_machine,
+    prelude::{IntoStateMachineExt, StateMachine},
+    state_machine,
 };
 
 use crate::glue::{
-    action_library::{Action, ActionLibrary},
+    action::HTNAction,
+    action_library::{ActionLibrary, ActionStatus},
+    htn::HTN,
     npc::NPCBlackboards,
 };
-
-#[derive(GodotConvert, Var, Export, Default, Clone)]
-#[godot(via = GString)]
-pub enum ActionStatus {
-    #[default]
-    Success,
-    Failed,
-    OnGoing,
-}
-
-enum ActorEvent {
-    Tick(f32),
-    SetActions(VecDeque<String>),
-}
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct Actor {
     #[export]
-    action_library: OnEditor<Gd<ActionLibrary>>,
+    action_library: Option<Gd<ActionLibrary>>,
 
-    current_action: Option<Gd<Action>>,
-    actor_id: String,
-    plan: VecDeque<String>,
+    #[export]
+    htn: Option<Gd<HTN>>,
+
+    #[export]
+    agent: Option<Gd<Node>>,
 
     #[export]
     thoughts_per_second: f32,
     time: f32,
+
+    id: String,
+
+    fsm: Option<StateMachine<ActorStateMachine>>,
+}
+
+#[godot_api]
+impl INode for Actor {
+    fn ready(&mut self) {
+        let htn = self.htn.as_mut().expect("Htn must be set in Actor").clone();
+        let action_library = self
+            .action_library
+            .as_mut()
+            .expect("Action Library must be set in Actor")
+            .clone();
+
+        let id = nanoid!();
+
+        let mut blackboards = NPCBlackboards::singleton();
+        blackboards.bind_mut().register(id.clone());
+        self.id = id;
+
+        let asm = ActorStateMachine {
+            htn: htn,
+            action_library: action_library,
+            id: self.id.clone(),
+            current_action: None,
+            original_plan: Vec::new(),
+            plan: VecDeque::new(),
+        };
+
+        self.fsm = Some(asm.state_machine());
+
+        // self.base().signals().tree_exited().connect_other(&*self, |this| {
+        //     let mut blackboards = NPCBlackboards::singleton();
+        //     blackboards.bind_mut().cleanup(this.id.clone());
+        // });
+        //
+        self.fsm.as_mut().unwrap().handle(&ActorEvent::Plan);
+    }
+    fn physics_process(&mut self, delta: f32) {
+        self.time += delta;
+
+        let timeout = 1.0 / self.thoughts_per_second;
+
+        while self.time > timeout {
+            self.time -= timeout;
+
+            self.fsm.as_mut().unwrap().handle(&ActorEvent::Plan);
+        }
+
+        self.fsm
+            .as_mut()
+            .unwrap()
+            .handle(&ActorEvent::Tick { delta });
+    }
+}
+
+pub enum ActorEvent {
+    Plan,
+    Tick { delta: f32 },
+}
+
+struct ActorStateMachine {
+    id: String,
+    htn: Gd<HTN>,
+    action_library: Gd<ActionLibrary>,
+    original_plan: Vec<String>,
+    plan: VecDeque<String>, //TODO make two of these, one for the original plan, and the executor's plan where it's popping them off
+    current_action: Option<Gd<HTNAction>>,
 }
 
 #[state_machine(initial = "State::idle()")]
-#[godot_api]
-impl Actor {
+impl ActorStateMachine {
     #[state]
     fn idle(&mut self, event: &ActorEvent) -> Outcome<State> {
         match event {
-            ActorEvent::SetActions(new_plan) if !new_plan.is_empty() => {
-                self.plan = new_plan.clone();
-                Transition(State::executing())
-            }
+            ActorEvent::Plan => Transition(State::plan()),
             _ => Handled,
         }
     }
@@ -60,25 +118,16 @@ impl Actor {
     )]
     fn executing(&mut self, event: &ActorEvent) -> Outcome<State> {
         match event {
-            ActorEvent::Tick(delta) => match self.tick_current_action(*delta) {
+            ActorEvent::Tick { delta } => match self.tick_current_action(*delta) {
                 Some(ActionStatus::OnGoing) => Handled,
                 Some(ActionStatus::Success) if !self.plan.is_empty() => {
-                    // Self-transition: fires exit_current_action, then start_next_action
-                    // — which advances the queue.
                     Transition(State::executing())
                 }
+                Some(ActionStatus::Failed) => Transition(State::plan()),
                 _ => Transition(State::idle()),
             },
-            ActorEvent::SetActions(new_actions) => {
-                // Replace the queue; the self-transition's exit will clean up the
-                // currently-running action, then entry starts the new head.
-                self.plan = new_actions.clone();
-                if self.plan.is_empty() {
-                    Transition(State::idle())
-                } else {
-                    Transition(State::executing())
-                }
-            }
+
+            ActorEvent::Plan => Transition(State::plan()),
         }
     }
 
@@ -98,14 +147,15 @@ impl Actor {
             return;
         };
 
-        let Some(()) = NPCBlackboards::singleton()
-            .bind()
-            .with_blackboard(&self.actor_id, |data| {
-                action_entry.bind().enter(data);
-                Some(());
-            })
+        let Some(()) =
+            NPCBlackboards::singleton()
+                .bind_mut()
+                .with_blackboard_mut(&self.id, |blackboard| {
+                    action_entry.bind_mut().enter(blackboard.clone());
+                    Some(());
+                })
         else {
-            let key = &self.actor_id;
+            let key = &self.id;
             godot_warn!("No blackboard found for key {key}");
             return;
         };
@@ -117,9 +167,9 @@ impl Actor {
             return;
         };
         NPCBlackboards::singleton()
-            .bind()
-            .with_blackboard(&self.actor_id, |data| {
-                current_action.bind_mut().exit(data.into());
+            .bind_mut()
+            .with_blackboard_mut(&self.id, |blackboard| {
+                current_action.bind_mut().exit(blackboard.clone());
                 Some(())
             });
         self.current_action = None;
@@ -128,9 +178,27 @@ impl Actor {
     fn tick_current_action(&mut self, delta: f32) -> Option<ActionStatus> {
         let current_action = self.current_action.as_mut()?;
         NPCBlackboards::singleton()
-            .bind()
-            .with_blackboard(&self.actor_id, |data| {
-                Some(current_action.tick(data, delta))
+            .bind_mut()
+            .with_blackboard_mut(&self.id, |blackboard| {
+                Some(current_action.bind_mut().update(blackboard.clone(), delta))
             })?
+    }
+
+    #[state]
+    fn plan(&mut self) -> Outcome<State> {
+        match self.htn.bind().plan(&self.id) {
+            Some(plan) => {
+                let is_eq = plan.iter().eq(self.original_plan.iter());
+
+                if is_eq {
+                    Transition(State::idle())
+                } else {
+                    self.original_plan = plan.clone().into();
+                    self.plan = plan;
+                    Transition(State::executing())
+                }
+            }
+            None => Transition(State::idle()),
+        }
     }
 }

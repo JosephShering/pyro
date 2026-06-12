@@ -4,7 +4,7 @@ use crate::glue::utility_ai::{blackboard::PyroUtilBlackboard, consideration::Con
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
-pub struct Action {
+pub struct UtilityAction {
     #[export]
     pub action_name: GString,
 
@@ -15,7 +15,7 @@ pub struct Action {
 }
 
 #[godot_api]
-impl IResource for Action {
+impl IResource for UtilityAction {
     fn init(base: Base<Resource>) -> Self {
         Self {
             action_name: GString::from(""),
@@ -26,7 +26,7 @@ impl IResource for Action {
 }
 
 #[godot_api]
-impl Action {
+impl UtilityAction {
     pub fn run(&self, blackboard: &Gd<PyroUtilBlackboard>) -> f32 {
         let score: f32 = self
             .considerations

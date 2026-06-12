@@ -22,5 +22,5 @@ impl INode3D for Campfire {
 
 #[godot_dyn]
 impl IInteractable for Campfire {
-    fn interact(&mut self) {}
+    // fn interact(&mut self) {}
 }

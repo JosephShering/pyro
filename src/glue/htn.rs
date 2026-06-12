@@ -40,13 +40,13 @@ impl HTN {
         Some(htn)
     }
 
-    pub fn plan(&mut self, key: &str) -> Option<VecDeque<String>> {
+    pub fn plan(&self, key: &str) -> Option<VecDeque<String>> {
         let blackboards = NPCBlackboards::singleton();
         let guard = blackboards.bind();
 
         guard.with_blackboard(key, |data| {
             let htn = self.htn.as_ref()?;
-            let actions = plan(htn, data)?;
+            let actions = plan(htn, data.bind().get_data())?;
 
             Some(actions)
         })?

@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::Add, ops::Div, ops::Mul, ops::Sub};
 
-#[derive(GodotConvert, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum Value {
     Int(i32),
     Float(f32),

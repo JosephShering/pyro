@@ -1,18 +1,15 @@
-use godot::{
-    classes::{CollisionObject3D, Texture2D},
-    prelude::*,
-};
+use godot::{classes::CollisionObject3D, prelude::*};
 
 pub trait IInteractable {
-    fn interact(&mut self);
-    fn on_hover(&mut self) {}
-    fn on_blur(&mut self) {}
-    fn interact_icon(&mut self) -> Option<Texture2D> {
-        None
-    }
-    fn interact_text(&mut self) -> Option<GString> {
-        None
-    }
+    // fn interact(&mut self);
+    // fn on_hover(&mut self) {}
+    // fn on_blur(&mut self) {}
+    // fn interact_icon(&mut self) -> Option<Texture2D> {
+    //     None
+    // }
+    // fn interact_text(&mut self) -> Option<GString> {
+    //     None
+    // }
 }
 
 #[derive(GodotClass)]

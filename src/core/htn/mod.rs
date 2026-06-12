@@ -9,7 +9,7 @@ use std::{
     collections::{HashMap, VecDeque},
 };
 
-pub use condition::{ComparisonOp, Condition};
+pub use condition::Condition;
 pub use parser::parse;
 pub use value::Value;
 
@@ -139,6 +139,7 @@ fn decompose(
 
 #[cfg(test)]
 mod tests {
+    use super::condition::ComparisonOp;
     use super::*;
 
     macro_rules! cond {

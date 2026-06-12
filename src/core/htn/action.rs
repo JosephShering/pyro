@@ -1,26 +1,26 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
-use crate::core::Value;
+// use crate::core::Value;
 
-pub enum ActionStatus {
-    Success,
-    Failed,
-    OnGoing,
-}
+// pub enum ActionStatus {
+//     Success,
+//     Failed,
+//     OnGoing,
+// }
 
-pub trait Action {
-    fn enter(&mut self, data: &mut HashMap<String, Value>) {}
-    fn tick(&mut self, data: &mut HashMap<String, Value>, delta: f32) -> ActionStatus {
-        ActionStatus::Success
-    }
-    fn exit(&mut self, data: &mut HashMap<String, Value>) {}
-}
+// pub trait Action {
+//     fn enter(&mut self, data: &mut HashMap<String, Value>) {}
+//     fn tick(&mut self, data: &mut HashMap<String, Value>, delta: f32) -> ActionStatus {
+//         ActionStatus::Success
+//     }
+//     fn exit(&mut self, data: &mut HashMap<String, Value>) {}
+// }
 
 // --- Action: three closures in a struct ---
 
-type EnterFn = Box<dyn Fn(&mut HashMap<String, Value>) + Send + Sync>;
-type TickFn = Box<dyn Fn(&mut HashMap<String, Value>, f32) -> ActionStatus + Send + Sync>;
-type ExitFn = Box<dyn Fn(&mut HashMap<String, Value>) + Send + Sync>;
+// type EnterFn = Box<dyn Fn(&mut HashMap<String, Value>) + Send + Sync>;
+// type TickFn = Box<dyn Fn(&mut HashMap<String, Value>, f32) -> ActionStatus + Send + Sync>;
+// type ExitFn = Box<dyn Fn(&mut HashMap<String, Value>) + Send + Sync>;
 
 // pub struct Action {
 //     enter: EnterFn,
