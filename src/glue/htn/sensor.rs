@@ -22,9 +22,19 @@ struct Sensor {
 impl INode for Sensor {
     fn physics_process(&mut self, _delta: f32) {
         let mut blackboards = NPCBlackboards::singleton();
-        let key = &self.actor.bind().id;
+        let key = &self.key;
+        let blackboard_key = &self.actor.bind().id;
         let value = self.target.get(&self.key);
 
-        blackboards.set(key, &value);
+        {
+            // godot_print!("{} {} {}", blackboard_key, key, value);
+        }
+
+        blackboards
+            .bind_mut()
+            .with_blackboard_mut(blackboard_key, |blackboard| {
+                blackboard.bind_mut().set(key.into(), value);
+                Some(())
+            });
     }
 }

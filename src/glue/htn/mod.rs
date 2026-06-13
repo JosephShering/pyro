@@ -1,8 +1,7 @@
-mod action;
 mod action_library;
 mod actor;
 mod blackboard;
-mod campfire;
 mod htn;
+mod htn_action;
 mod npc;
 mod sensor;

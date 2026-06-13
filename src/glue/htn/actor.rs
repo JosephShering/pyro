@@ -5,9 +5,9 @@ use statig::prelude::*;
 use std::collections::VecDeque;
 
 use super::{
-    action::HTNAction,
     action_library::{ActionLibrary, ActionStatus},
     htn::HTN,
+    htn_action::HTNAction,
     npc::NPCBlackboards,
 };
 
@@ -58,14 +58,14 @@ impl INode for Actor {
         };
 
         self.fsm = Some(asm.state_machine());
-
-        // self.base().signals().tree_exited().connect_other(&*self, |this| {
-        //     let mut blackboards = NPCBlackboards::singleton();
-        //     blackboards.bind_mut().cleanup(this.id.clone());
-        // });
-        //
         self.fsm.as_mut().unwrap().handle(&ActorEvent::Plan);
     }
+
+    fn exit_tree(&mut self) {
+        let mut blackboards = NPCBlackboards::singleton();
+        blackboards.bind_mut().cleanup(self.id.clone());
+    }
+
     fn physics_process(&mut self, delta: f32) {
         self.time += delta;
 
@@ -94,9 +94,11 @@ struct ActorStateMachine {
     htn: Gd<HTN>,
     action_library: Gd<ActionLibrary>,
     original_plan: Vec<String>,
-    plan: VecDeque<String>, //TODO make two of these, one for the original plan, and the executor's plan where it's popping them off
+    plan: VecDeque<String>,
     current_action: Option<Gd<HTNAction>>,
 }
+
+// TODO check if the preconditions are true for the action to commence.
 
 #[state_machine(initial = "State::idle()")]
 impl ActorStateMachine {

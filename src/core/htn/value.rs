@@ -6,6 +6,7 @@ pub enum Value {
     Float(f32),
     Bool(bool),
     String(String),
+    Vector3(f32, f32, f32),
 }
 
 macro_rules! impl_arith {

@@ -1,4 +1,4 @@
-use super::action::HTNAction;
+use super::htn_action::HTNAction;
 use godot::prelude::*;
 use std::collections::HashMap;
 

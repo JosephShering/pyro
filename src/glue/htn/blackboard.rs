@@ -28,6 +28,7 @@ impl Blackboard {
                 Value::Float(float) => float.to_variant(),
                 Value::Bool(bool) => bool.to_variant(),
                 Value::String(string) => string.to_variant(),
+                Value::Vector3(x, y, z) => Vector3::new(*x, *y, *z).to_variant(),
             },
             None => Variant::nil(),
         }
