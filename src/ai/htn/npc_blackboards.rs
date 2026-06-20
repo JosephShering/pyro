@@ -5,7 +5,7 @@ use godot::{
     prelude::*,
 };
 
-use crate::glue::htn::blackboard::Blackboard;
+use crate::ai::blackboard::Blackboard;
 
 #[derive(GodotClass)]
 #[class(singleton, init, base=Node)]

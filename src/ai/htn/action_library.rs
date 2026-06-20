@@ -27,8 +27,8 @@ impl INode for ActionLibrary {
 
 #[godot_api]
 impl ActionLibrary {
-    pub fn get_mut(&mut self, name: &str) -> Option<&mut Gd<HTNAction>> {
-        self.actions.get_mut(name)
+    pub fn get(&mut self, name: &str) -> Option<Gd<HTNAction>> {
+        self.actions.get(name).cloned()
     }
 
     fn gather_actions(&mut self) {

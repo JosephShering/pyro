@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::glue::utility_ai::{blackboard::PyroUtilBlackboard, consideration::Consideration};
+use crate::ai::{blackboard::Blackboard, utility_ai::consideration::Consideration};
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
@@ -27,7 +27,7 @@ impl IResource for UtilityAction {
 
 #[godot_api]
 impl UtilityAction {
-    pub fn run(&self, blackboard: &Gd<PyroUtilBlackboard>) -> f32 {
+    pub fn run(&self, blackboard: Gd<Blackboard>) -> f32 {
         let score: f32 = self
             .considerations
             .iter_shared()

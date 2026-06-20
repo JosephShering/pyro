@@ -1,4 +1,4 @@
-use crate::glue::htn::npc::NPCBlackboards;
+use crate::ai::htn::npc_blackboards::NPCBlackboards;
 
 use super::actor::Actor;
 use godot::prelude::*;
@@ -25,10 +25,6 @@ impl INode for Sensor {
         let key = &self.key;
         let blackboard_key = &self.actor.bind().id;
         let value = self.target.get(&self.key);
-
-        {
-            // godot_print!("{} {} {}", blackboard_key, key, value);
-        }
 
         blackboards
             .bind_mut()

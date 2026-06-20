@@ -55,3 +55,7 @@ impl INode3D for Campfire {
 
 #[godot_api]
 impl Campfire {}
+
+#[derive(GodotClass)]
+#[class(init, base=Node3D)]
+pub struct CampfireSeat {}

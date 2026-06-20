@@ -1,5 +1,5 @@
-use super::npc::NPCBlackboards;
-use crate::core::htn::*;
+use super::npc_blackboards::NPCBlackboards;
+use crate::ai::htn::*;
 use godot::{
     classes::{FileAccess, file_access::ModeFlags},
     prelude::*,

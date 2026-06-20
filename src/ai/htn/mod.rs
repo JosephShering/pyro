@@ -1,7 +1,7 @@
 mod action_library;
 mod actor;
-mod blackboard;
+mod core;
 mod htn;
 mod htn_action;
-mod npc;
+mod npc_blackboards;
 mod sensor;

@@ -29,6 +29,7 @@ impl Blackboard {
                 Value::Bool(bool) => bool.to_variant(),
                 Value::String(string) => string.to_variant(),
                 Value::Vector3(x, y, z) => Vector3::new(*x, *y, *z).to_variant(),
+                Value::Vector2(x, y) => Vector2::new(*x, *y).to_variant(),
             },
             None => Variant::nil(),
         }
@@ -42,6 +43,14 @@ impl Blackboard {
             VariantType::BOOL => Value::Bool(value.to::<bool>()),
             VariantType::STRING | VariantType::STRING_NAME => {
                 Value::String(value.to::<GString>().to_string())
+            }
+            VariantType::VECTOR3 => {
+                let vec3 = value.to::<Vector3>();
+                Value::Vector3(vec3.x, vec3.y, vec3.z)
+            }
+            VariantType::VECTOR2 => {
+                let vec2 = value.to::<Vector2>();
+                Value::Vector2(vec2.x, vec2.y)
             }
             VariantType::NIL => {
                 self.data.remove(&key.to_string());

@@ -1,7 +1,7 @@
 use godot::prelude::*;
 
 use super::action_library::ActionStatus;
-use super::blackboard::Blackboard;
+use crate::ai::blackboard::Blackboard;
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]

@@ -1,13 +1,10 @@
 use godot::prelude::*;
 
-use crate::glue::utility_ai::{action::UtilityAction, blackboard::PyroUtilBlackboard};
+use crate::ai::{blackboard::Blackboard, utility_ai::action::UtilityAction};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct Brain {
-    #[export]
-    blackboard: OnEditor<Gd<PyroUtilBlackboard>>,
-
     #[export]
     actions: Array<Gd<UtilityAction>>,
 
@@ -27,7 +24,9 @@ impl Brain {
             .iter_shared()
             .map(|action| {
                 let action_name = action.bind().action_name.clone();
-                let score = action.bind().run(&self.blackboard);
+
+                let blackboard = self.blackboard.unwrap();
+                let score = action.bind().run(self.blackboard.unwrap().clone());
 
                 (action_name, score)
             })
