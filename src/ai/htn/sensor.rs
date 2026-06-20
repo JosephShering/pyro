@@ -13,7 +13,7 @@ struct Sensor {
     target: OnEditor<Gd<Node>>,
 
     #[export]
-    key: StringName,
+    keys: Array<StringName>,
 
     base: Base<Node>,
 }
@@ -21,16 +21,17 @@ struct Sensor {
 #[godot_api]
 impl INode for Sensor {
     fn physics_process(&mut self, _delta: f32) {
-        let mut blackboards = NPCBlackboards::singleton();
-        let key = &self.key;
-        let blackboard_key = &self.actor.bind().id;
-        let value = self.target.get(&self.key);
+        for key in self.keys.iter_shared() {
+            let mut blackboards = NPCBlackboards::singleton();
+            let blackboard_key = &self.actor.bind().id;
+            let value = self.target.get(&key);
 
-        blackboards
-            .bind_mut()
-            .with_blackboard_mut(blackboard_key, |blackboard| {
-                blackboard.bind_mut().set(key.into(), value);
-                Some(())
-            });
+            blackboards
+                .bind_mut()
+                .with_blackboard_mut(blackboard_key, |blackboard| {
+                    blackboard.bind_mut().set(key, value);
+                    Some(())
+                });
+        }
     }
 }

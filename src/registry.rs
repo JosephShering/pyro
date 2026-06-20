@@ -1,7 +1,7 @@
 use godot::prelude::*;
 
 #[derive(GodotClass)]
-#[class(singleton, init, base=Node)]
+#[class(init, base=Node)]
 struct Registry {
     items: Vec<Gd<Node3D>>,
     base: Base<Node>,
@@ -32,5 +32,43 @@ impl Registry {
                 dist1.total_cmp(&dist2)
             })
             .cloned()
+    }
+
+    #[func]
+    pub fn find(&mut self, node: Gd<Node3D>) -> Option<Gd<Node3D>> {
+        self.items
+            .iter()
+            .find(|item| item.instance_id() == node.instance_id())
+            .cloned()
+    }
+
+    #[func]
+    pub fn filter(&mut self, f: Callable) -> Array<Gd<Node3D>> {
+        self.items
+            .iter()
+            .filter(|item| f.call(vslice![**item]).booleanize())
+            .cloned()
+            .collect()
+    }
+
+    #[func]
+    pub fn reduce(&mut self, default: Variant, f: Callable) -> Variant {
+        self.items
+            .iter()
+            .fold(default, |acc, item| f.call(vslice![acc, *item]))
+    }
+
+    #[func]
+    pub fn any(&mut self, f: Callable) -> bool {
+        self.items
+            .iter()
+            .any(|item| f.call(vslice![*item]).booleanize())
+    }
+
+    #[func]
+    pub fn all(&mut self, f: Callable) -> bool {
+        self.items
+            .iter()
+            .all(|item| f.call(vslice![*item]).booleanize())
     }
 }

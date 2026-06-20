@@ -1,4 +1,5 @@
 use godot::prelude::*;
+use itertools::Itertools;
 
 #[derive(GodotClass)]
 #[class(singleton, init, base=Node)]
@@ -21,7 +22,7 @@ impl Campfires {
     }
 
     #[func]
-    pub fn closest(&mut self, point: Vector3) -> Option<Gd<Campfire>> {
+    pub fn closest_one(&mut self, point: Vector3) -> Option<Gd<Campfire>> {
         self.campfires
             .iter()
             .min_by(|c1, c2| {
@@ -33,6 +34,19 @@ impl Campfires {
                 dist1.total_cmp(&dist2)
             })
             .cloned()
+    }
+
+    #[func]
+    pub fn closest(&mut self, point: Vector3) -> Array<Gd<Campfire>> {
+        let mut by_dist: Vec<(f32, Gd<Campfire>)> = self
+            .campfires
+            .iter()
+            .map(|c| (point.distance_squared_to(c.get_position()), c.clone()))
+            .collect();
+
+        by_dist.sort_by(|(d1, _), (d2, _)| d1.total_cmp(d2));
+
+        by_dist.into_iter().map(|(_, c)| c).collect()
     }
 }
 

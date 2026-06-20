@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use godot::prelude::*;
 
-use crate::core::Value;
+use crate::ai::Value;
 
 #[derive(GodotClass, Debug)]
 #[class(init, base=RefCounted)]
@@ -21,7 +21,7 @@ impl Blackboard {
     }
 
     #[func]
-    pub fn get(&mut self, key: GString) -> Variant {
+    pub fn get(&mut self, key: StringName) -> Variant {
         match self.data.get(&key.to_string()) {
             Some(value) => match value {
                 Value::Int(int) => int.to_variant(),
@@ -36,7 +36,7 @@ impl Blackboard {
     }
 
     #[func]
-    pub fn set(&mut self, key: GString, value: Variant) {
+    pub fn set(&mut self, key: StringName, value: Variant) {
         let v = match value.get_type() {
             VariantType::INT => Value::Int(value.to::<i32>()),
             VariantType::FLOAT => Value::Float(value.to::<f32>()),

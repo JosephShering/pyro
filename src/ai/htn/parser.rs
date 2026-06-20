@@ -27,10 +27,12 @@
 use chumsky::prelude::*;
 
 use super::{
-    ArithmeticOp, Effect, Task,
     condition::{ComparisonOp, Condition},
-    value::Value,
+    effect::{ArithmeticOp, Effect},
+    task::Task,
 };
+
+use crate::ai::Value;
 
 /// Error/recovery configuration shared by every sub-parser.
 type Extra<'a> = extra::Err<Rich<'a, char>>;
