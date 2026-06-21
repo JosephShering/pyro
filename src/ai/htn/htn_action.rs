@@ -34,7 +34,9 @@ impl HTNAction {
     const ONGOING: i64 = 2;
 
     #[func(virtual)]
-    pub fn enter(&mut self, _data: Gd<Blackboard>) {}
+    pub fn enter(&mut self, _data: Gd<Blackboard>) -> ActionStatus {
+        ActionStatus::Success
+    }
 
     #[func(virtual)]
     pub fn update(&mut self, _data: Gd<Blackboard>, _delta: f32) -> ActionStatus {

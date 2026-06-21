@@ -1,5 +1,4 @@
 use godot::prelude::*;
-use itertools::Itertools;
 
 #[derive(GodotClass)]
 #[class(singleton, init, base=Node)]
@@ -25,6 +24,7 @@ impl Campfires {
     pub fn closest_one(&mut self, point: Vector3) -> Option<Gd<Campfire>> {
         self.campfires
             .iter()
+            .filter(|c| c.bind().has_open_seat())
             .min_by(|c1, c2| {
                 let pos1 = c1.get_position();
                 let pos2 = c2.get_position();
@@ -53,6 +53,7 @@ impl Campfires {
 #[derive(GodotClass)]
 #[class(init, base=Node3D)]
 pub struct Campfire {
+    seats: Vec<Gd<CampfireSeat>>,
     base: Base<Node3D>,
 }
 
@@ -60,6 +61,13 @@ pub struct Campfire {
 impl INode3D for Campfire {
     fn ready(&mut self) {
         Campfires::singleton().bind_mut().register(self.to_gd());
+
+        self.seats = self
+            .base()
+            .get_children()
+            .iter_shared()
+            .filter_map(|child| child.try_cast::<CampfireSeat>().ok())
+            .collect();
     }
 
     fn exit_tree(&mut self) {
@@ -68,8 +76,57 @@ impl INode3D for Campfire {
 }
 
 #[godot_api]
-impl Campfire {}
+impl Campfire {
+    fn has_open_seat(&self) -> bool {
+        self.seats.iter().any(|seat| seat.bind().is_open)
+    }
+
+    #[func]
+    fn get_open_seat(&mut self) -> Option<Gd<CampfireSeat>> {
+        self.seats
+            .iter_mut()
+            .find(|seat| seat.bind().is_open)
+            .cloned()
+    }
+
+    #[func]
+    fn claim_seat(&mut self) -> Option<Gd<CampfireSeat>> {
+        let Some(seat) = self.seats.iter_mut().find(|seat| seat.bind().is_open) else {
+            return None;
+        };
+
+        seat.bind_mut().claim();
+
+        Some(seat.clone())
+    }
+}
 
 #[derive(GodotClass)]
-#[class(init, base=Node3D)]
-pub struct CampfireSeat {}
+#[class(base=Node3D)]
+pub struct CampfireSeat {
+    is_open: bool,
+    base: Base<Node3D>,
+}
+
+#[godot_api]
+impl INode3D for CampfireSeat {
+    fn init(base: Base<Node3D>) -> Self {
+        Self {
+            is_open: true,
+            base,
+        }
+    }
+}
+
+#[godot_api]
+impl CampfireSeat {
+    #[func]
+    fn claim(&mut self) {
+        self.is_open = false;
+    }
+
+    #[func]
+    fn unclaim(&mut self) {
+        self.is_open = true;
+    }
+}
