@@ -1,9 +1,10 @@
-use super::{npc_blackboards::NPCBlackboards, parser::parse, task::Task, task::plan};
+use crate::ai::{NPCBlackboards, actor::Thinker};
+
+use super::{parser::parse, task::Task, task::plan};
 use godot::{
     classes::{FileAccess, file_access::ModeFlags},
     prelude::*,
 };
-use std::collections::VecDeque;
 
 #[derive(GodotClass)]
 #[class(init, base=Resource)]
@@ -38,7 +39,7 @@ impl HTN {
         Some(htn)
     }
 
-    pub fn plan(&self, key: &str) -> Option<VecDeque<String>> {
+    pub fn plan(&self, key: &str) -> Option<Vec<String>> {
         let blackboards = NPCBlackboards::singleton();
         let guard = blackboards.bind();
 
@@ -48,5 +49,12 @@ impl HTN {
 
             Some(actions)
         })?
+    }
+}
+
+#[godot_dyn]
+impl Thinker for HTN {
+    fn think(&self, id: &str) -> Option<Vec<String>> {
+        self.plan(id)
     }
 }

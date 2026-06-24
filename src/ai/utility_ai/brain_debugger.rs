@@ -1,6 +1,6 @@
 use godot::{classes::Label, prelude::*};
 
-use crate::glue::utility_ai::brain::Brain;
+use crate::ai::utility_ai::brain::Brain;
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]

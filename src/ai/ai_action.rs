@@ -1,13 +1,27 @@
 use godot::prelude::*;
 
-use crate::ai::{
-    blackboard::Blackboard,
-    htn::action_library::{ActionEnterStatus, ActionUpdateStatus},
-};
+use crate::ai::blackboard::Blackboard;
+
+#[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
+#[godot(via = u8)]
+pub enum ActionUpdateStatus {
+    #[default]
+    Success,
+    Failed,
+    OnGoing,
+}
+
+#[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
+#[godot(via = u8)]
+pub enum ActionEnterStatus {
+    #[default]
+    Success,
+    Failed,
+}
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
-pub struct HTNAction {
+pub struct AIAction {
     #[export]
     pub key: GString,
 
@@ -15,7 +29,7 @@ pub struct HTNAction {
 }
 
 #[godot_api]
-impl INode for HTNAction {
+impl INode for AIAction {
     fn ready(&mut self) {
         if self.key.is_empty() {
             let node_name = self.base().get_name();
@@ -25,7 +39,7 @@ impl INode for HTNAction {
 }
 
 #[godot_api]
-impl HTNAction {
+impl AIAction {
     #[constant]
     const SUCCESS: i64 = 0;
 

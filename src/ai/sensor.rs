@@ -1,14 +1,10 @@
-use crate::ai::htn::npc_blackboards::NPCBlackboards;
+use crate::ai::NPCBlackboards;
 
-use super::actor::Actor;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 struct Sensor {
-    #[export]
-    actor: OnEditor<Gd<Actor>>,
-
     #[export]
     target: OnEditor<Gd<Node>>,
 
@@ -22,14 +18,14 @@ struct Sensor {
 impl INode for Sensor {
     fn physics_process(&mut self, _delta: f32) {
         for key in self.keys.iter_shared() {
+            let blackboard_key = &self.target.instance_id().to_string();
             let mut blackboards = NPCBlackboards::singleton();
-            let blackboard_key = &self.actor.bind().id;
-            let value = self.target.get(&key);
+            let value = &self.target.get(&key);
 
             blackboards
                 .bind_mut()
                 .with_blackboard_mut(blackboard_key, |blackboard| {
-                    blackboard.bind_mut().set(key, value);
+                    blackboard.bind_mut().set(key, value.clone());
                     Some(())
                 });
         }

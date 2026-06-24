@@ -21,7 +21,7 @@ impl Blackboard {
     }
 
     #[func]
-    pub fn get(&mut self, key: StringName) -> Variant {
+    pub fn get(&self, key: StringName) -> Variant {
         match self.data.get(&key.to_string()) {
             Some(value) => match value {
                 Value::Int(int) => int.to_variant(),

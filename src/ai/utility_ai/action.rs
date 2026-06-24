@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-use crate::ai::{blackboard::Blackboard, utility_ai::consideration::Consideration};
+use crate::ai::utility_ai::consideration::Consideration;
 
 #[derive(GodotClass)]
 #[class(base=Resource)]
@@ -18,7 +18,7 @@ pub struct UtilityAction {
 impl IResource for UtilityAction {
     fn init(base: Base<Resource>) -> Self {
         Self {
-            action_name: GString::from(""),
+            action_name: GString::default(),
             considerations: Array::new(),
             base,
         }
@@ -27,11 +27,11 @@ impl IResource for UtilityAction {
 
 #[godot_api]
 impl UtilityAction {
-    pub fn run(&self, blackboard: Gd<Blackboard>) -> f32 {
+    pub fn run(&self, actor_key: &str) -> f32 {
         let score: f32 = self
             .considerations
             .iter_shared()
-            .map(|consideration| consideration.bind().get_value(&blackboard))
+            .map(|consideration| consideration.bind().get_value(actor_key))
             .product();
 
         let num_considerations = self.considerations.len();

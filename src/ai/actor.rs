@@ -4,11 +4,15 @@ use statig::prelude::*;
 
 use std::collections::VecDeque;
 
-use crate::ai::htn::action_library::{ActionEnterStatus, ActionUpdateStatus};
-
-use super::{
-    action_library::ActionLibrary, htn::HTN, htn_action::HTNAction, npc_blackboards::NPCBlackboards,
+use crate::ai::{
+    NPCBlackboards,
+    action_library::ActionLibrary,
+    ai_action::{AIAction, ActionEnterStatus, ActionUpdateStatus},
 };
+
+pub trait Thinker {
+    fn think(&self, id: &str) -> Option<Vec<String>>;
+}
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -17,7 +21,7 @@ pub struct Actor {
     action_library: Option<Gd<ActionLibrary>>,
 
     #[export]
-    htn: Option<Gd<HTN>>,
+    thinker: Option<DynGd<Node, dyn Thinker>>,
 
     #[export]
     agent: Option<Gd<Node>>,
@@ -26,15 +30,17 @@ pub struct Actor {
     thoughts_per_second: f32,
     time: f32,
 
-    pub id: String,
-
     fsm: Option<StateMachine<ActorStateMachine>>,
 }
 
 #[godot_api]
 impl INode for Actor {
     fn ready(&mut self) {
-        let htn = self.htn.as_mut().expect("Htn must be set in Actor").clone();
+        let thinker = self
+            .thinker
+            .as_mut()
+            .expect("Thinker must be set in Actor")
+            .clone();
         let action_library = self
             .action_library
             .as_mut()
@@ -45,12 +51,16 @@ impl INode for Actor {
 
         let mut blackboards = NPCBlackboards::singleton();
         blackboards.bind_mut().register(id.clone());
-        self.id = id;
+
+        let agent = self
+            .agent
+            .as_ref()
+            .expect("Agent must be set for actor to work");
 
         let asm = ActorStateMachine {
-            htn: htn,
+            thinker: thinker,
             action_library: action_library,
-            id: self.id.clone(),
+            id: agent.instance_id().to_string(),
             current_action: None,
             original_plan: Vec::new(),
             plan: VecDeque::new(),
@@ -61,7 +71,12 @@ impl INode for Actor {
 
     fn exit_tree(&mut self) {
         let mut blackboards = NPCBlackboards::singleton();
-        blackboards.bind_mut().cleanup(self.id.clone());
+        let agent = self
+            .agent
+            .as_ref()
+            .expect("Agent was not set when cleaning up actor, memory leak");
+        let instance_id = agent.instance_id().to_string();
+        blackboards.bind_mut().cleanup(instance_id);
     }
 
     fn physics_process(&mut self, delta: f32) {
@@ -89,11 +104,11 @@ pub enum ActorEvent {
 
 struct ActorStateMachine {
     id: String,
-    htn: Gd<HTN>,
+    thinker: DynGd<Node, dyn Thinker>,
     action_library: Gd<ActionLibrary>,
     original_plan: Vec<String>,
     plan: VecDeque<String>,
-    current_action: Option<Gd<HTNAction>>,
+    current_action: Option<Gd<AIAction>>,
 }
 
 #[state_machine(initial = "State::idle()")]
@@ -126,7 +141,7 @@ impl ActorStateMachine {
     fn handle_plan_event(&mut self) -> Option<()> {
         let plan = self.call_plan()?;
 
-        self.plan = plan.clone();
+        self.plan = plan.into();
         self.original_plan = self.plan.clone().into();
 
         let _ = self.call_exit();
@@ -136,8 +151,6 @@ impl ActorStateMachine {
 
     fn handle_tick_event(&mut self, delta: f32) -> Option<Outcome<State>> {
         let action_status = self.call_update(delta)?;
-
-        // godot_print!("{:?}", action_status);
 
         match action_status {
             ActionUpdateStatus::Success => {
@@ -211,8 +224,8 @@ impl ActorStateMachine {
             })
     }
 
-    fn call_plan(&self) -> Option<VecDeque<String>> {
-        let plan = self.htn.bind().plan(&self.id)?;
+    fn call_plan(&self) -> Option<Vec<String>> {
+        let plan = self.thinker.dyn_bind().think(&self.id)?;
         let is_eq = plan.iter().eq(self.original_plan.iter());
         if is_eq { None } else { Some(plan.clone()) }
     }

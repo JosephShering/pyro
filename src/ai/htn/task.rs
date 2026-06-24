@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, VecDeque},
-};
+use std::{borrow::Cow, collections::HashMap};
 
 use crate::ai::Value;
 
@@ -27,7 +24,7 @@ pub enum Task {
     },
 }
 
-pub fn plan(task: &Task, data: &HashMap<String, Value>) -> Option<VecDeque<String>> {
+pub fn plan(task: &Task, data: &HashMap<String, Value>) -> Option<Vec<String>> {
     match decompose(task, data) {
         Some((plan, _)) => Some(plan.into()),
         None => None,

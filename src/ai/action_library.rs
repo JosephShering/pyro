@@ -1,28 +1,12 @@
-use super::htn_action::HTNAction;
 use godot::prelude::*;
 use std::collections::HashMap;
 
-#[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
-#[godot(via = u8)]
-pub enum ActionUpdateStatus {
-    #[default]
-    Success,
-    Failed,
-    OnGoing,
-}
-
-#[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
-#[godot(via = u8)]
-pub enum ActionEnterStatus {
-    #[default]
-    Success,
-    Failed,
-}
+use crate::ai::ai_action::AIAction;
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
 pub struct ActionLibrary {
-    actions: HashMap<String, Gd<HTNAction>>,
+    actions: HashMap<String, Gd<AIAction>>,
     base: Base<Node>,
 }
 
@@ -35,13 +19,13 @@ impl INode for ActionLibrary {
 
 #[godot_api]
 impl ActionLibrary {
-    pub fn get(&mut self, name: &str) -> Option<Gd<HTNAction>> {
+    pub fn get(&mut self, name: &str) -> Option<Gd<AIAction>> {
         self.actions.get(name).cloned()
     }
 
     fn gather_actions(&mut self) {
         self.base().get_children().iter_shared().for_each(|child| {
-            match child.try_cast::<HTNAction>() {
+            match child.try_cast::<AIAction>() {
                 Ok(action) => {
                     let key = action.bind().key.to_string();
                     self.actions.insert(key, action);
