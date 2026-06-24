@@ -4,7 +4,6 @@ mod interaction;
 mod inventory;
 mod level;
 mod player;
-mod registry;
 use godot::prelude::*;
 
 struct Pyro;

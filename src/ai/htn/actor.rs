@@ -4,11 +4,10 @@ use statig::prelude::*;
 
 use std::collections::VecDeque;
 
+use crate::ai::htn::action_library::{ActionEnterStatus, ActionUpdateStatus};
+
 use super::{
-    action_library::{ActionLibrary, ActionStatus},
-    htn::HTN,
-    htn_action::HTNAction,
-    npc_blackboards::NPCBlackboards,
+    action_library::ActionLibrary, htn::HTN, htn_action::HTNAction, npc_blackboards::NPCBlackboards,
 };
 
 #[derive(GodotClass)]
@@ -97,6 +96,16 @@ struct ActorStateMachine {
     current_action: Option<Gd<HTNAction>>,
 }
 
+#[derive(Debug)]
+enum StateMachineError {
+    NoPlanFormed,
+    NoPlanSet,
+    SamePlanFormed,
+    NoCurrentAction { source: &'static str },
+    FailedAction { name: String },
+    NoKeyFound { key: String },
+}
+
 // TODO check if the preconditions are true for the action to commence.
 
 #[state_machine(initial = "State::idle()")]
@@ -114,91 +123,65 @@ impl ActorStateMachine {
 
     #[state]
     fn executing(&mut self, event: &ActorEvent) -> Outcome<State> {
-        let mut current_action = self.current_action.clone();
-
         match event {
-            ActorEvent::Tick { delta } => {
-                match self.handle_tick_event() {
-                    Some(_) => Handled,
-                    None => Transition(State::idle()),
-                }
-
-                // match current_action.as_mut() {
-                //     Some(action) => {
-                //         let Some(action_status) = NPCBlackboards::singleton()
-                //             .bind_mut()
-                //             .with_blackboard_mut(&self.id, |blackboard| {
-                //                 action.bind_mut().update(blackboard.clone(), *delta)
-                //             })
-                //         else {
-                //             godot_error!("GDScript _update function didn't return anything somehow");
-                //             return Transition(State::idle());
-                //         };
-
-                //         match (action_status, self.plan.is_empty()) {
-                //             (ActionStatus::OnGoing, _) => Handled,
-                //             (ActionStatus::Success, true) => {
-                //                 self.exit(action);
-                //                 Transition(State::idle())
-                //             }
-
-                //             (ActionStatus::Success, false) => {
-                //                 self.enter(action);
-                //                 self.exit(action);
-                //                 Handled
-                //             }
-                //             (ActionStatus::Failed, _) => {
-                //                 self.exit(action);
-                //                 Transition(State::idle())
-                //             }
-                //         }
-                //     }
-                //     None => Transition(State::idle()),
-            }
-
-            ActorEvent::Plan => match (self.plan(), current_action.as_mut()) {
-                (Some(_plan), Some(action)) => {
-                    self.exit(action);
-                    self.enter(action);
-                    Handled
-                }
-                (_, _) => {
-                    if self.plan.is_empty() {
-                        Transition(State::idle())
-                    } else {
-                        Handled
-                    }
-                }
+            ActorEvent::Tick { delta } => match self.handle_tick_event(*delta) {
+                Some(transition) => transition,
+                None => Transition(State::idle()),
             },
+            ActorEvent::Plan => {
+                let _ = self.handle_plan_event();
+                Handled
+            }
         }
     }
 
     fn handle_plan_event(&mut self) -> Option<()> {
-        let plan = self.plan()?;
+        let plan = self.call_plan()?;
 
         self.plan = plan.clone();
-        self.original_plan = plan.clone().into();
+        self.original_plan = self.plan.clone().into();
 
-        self.call_exit()?;
+        let _ = self.call_exit();
         self.pop_to_next_action()?;
-        self.call_enter()?;
-        Some(())
+        self.call_enter()
     }
 
-    fn handle_tick_event(&mut self) -> Option<()> {
-        Some(())
+    fn handle_tick_event(&mut self, delta: f32) -> Option<Outcome<State>> {
+        let action_status = self.call_update(delta)?;
+
+        // godot_print!("{:?}", action_status);
+
+        match action_status {
+            ActionUpdateStatus::Success => {
+                self.call_exit()?;
+                self.pop_to_next_action()?;
+                self.call_enter()?;
+
+                Some(Handled)
+            }
+            ActionUpdateStatus::Failed => {
+                self.call_exit()?;
+                Some(Transition(State::idle()))
+            }
+            ActionUpdateStatus::OnGoing => Some(Handled),
+        }
     }
 
     fn pop_to_next_action(&mut self) -> Option<()> {
-        let action_name = self.plan.pop_front()?;
+        let Some(action_name) = self.plan.pop_front() else {
+            return None;
+        };
         let mut library = self.action_library.bind_mut();
         self.current_action = library.get(&action_name);
 
         Some(())
     }
 
-    fn call_update(&mut self, delta: f32) -> Option<ActionStatus> {
-        let action = self.current_action.as_mut()?;
+    fn call_update(&mut self, delta: f32) -> Option<ActionUpdateStatus> {
+        let Some(action) = self.current_action.as_mut() else {
+            godot_error!("No current_action found in call_update");
+            return None;
+        };
 
         NPCBlackboards::singleton()
             .bind_mut()
@@ -207,18 +190,31 @@ impl ActorStateMachine {
             })
     }
 
-    fn call_enter(&mut self) -> Option<ActionStatus> {
-        let action = self.current_action.as_mut()?;
+    fn call_enter(&mut self) -> Option<()> {
+        let Some(action) = self.current_action.as_mut() else {
+            godot_error!("No current_action found in call_enter");
+            return None;
+        };
 
-        NPCBlackboards::singleton()
+        let Some(action_status) = NPCBlackboards::singleton()
             .bind_mut()
             .with_blackboard_mut(&self.id, |blackboard| {
                 action.bind_mut().enter(blackboard.clone())
             })
+        else {
+            return None;
+        };
+
+        match action_status {
+            ActionEnterStatus::Success => Some(()),
+            ActionEnterStatus::Failed => None,
+        }
     }
 
     fn call_exit(&mut self) -> Option<()> {
-        let action = self.current_action.as_mut()?;
+        let Some(action) = self.current_action.as_mut() else {
+            return None;
+        };
 
         NPCBlackboards::singleton()
             .bind_mut()
@@ -227,11 +223,9 @@ impl ActorStateMachine {
             })
     }
 
-    fn plan(&self) -> Option<&VecDeque<String>> {
+    fn call_plan(&self) -> Option<VecDeque<String>> {
         let plan = self.htn.bind().plan(&self.id)?;
-
         let is_eq = plan.iter().eq(self.original_plan.iter());
-
-        if is_eq { None } else { Some(&self.plan) }
+        if is_eq { None } else { Some(plan.clone()) }
     }
 }

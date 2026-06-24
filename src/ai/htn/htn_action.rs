@@ -1,7 +1,9 @@
 use godot::prelude::*;
 
-use super::action_library::ActionStatus;
-use crate::ai::blackboard::Blackboard;
+use crate::ai::{
+    blackboard::Blackboard,
+    htn::action_library::{ActionEnterStatus, ActionUpdateStatus},
+};
 
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -34,13 +36,13 @@ impl HTNAction {
     const ONGOING: i64 = 2;
 
     #[func(virtual)]
-    pub fn enter(&mut self, _data: Gd<Blackboard>) -> ActionStatus {
-        ActionStatus::Success
+    pub fn enter(&mut self, _data: Gd<Blackboard>) -> ActionEnterStatus {
+        ActionEnterStatus::Success
     }
 
     #[func(virtual)]
-    pub fn update(&mut self, _data: Gd<Blackboard>, _delta: f32) -> ActionStatus {
-        ActionStatus::Success
+    pub fn update(&mut self, _data: Gd<Blackboard>, _delta: f32) -> ActionUpdateStatus {
+        ActionUpdateStatus::Success
     }
 
     #[func(virtual)]

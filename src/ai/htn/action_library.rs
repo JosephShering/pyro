@@ -4,11 +4,19 @@ use std::collections::HashMap;
 
 #[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
 #[godot(via = u8)]
-pub enum ActionStatus {
+pub enum ActionUpdateStatus {
     #[default]
     Success,
     Failed,
     OnGoing,
+}
+
+#[derive(GodotConvert, Var, Export, Default, Debug, Clone, PartialEq)]
+#[godot(via = u8)]
+pub enum ActionEnterStatus {
+    #[default]
+    Success,
+    Failed,
 }
 
 #[derive(GodotClass)]
