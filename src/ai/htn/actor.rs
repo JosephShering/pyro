@@ -96,18 +96,6 @@ struct ActorStateMachine {
     current_action: Option<Gd<HTNAction>>,
 }
 
-#[derive(Debug)]
-enum StateMachineError {
-    NoPlanFormed,
-    NoPlanSet,
-    SamePlanFormed,
-    NoCurrentAction { source: &'static str },
-    FailedAction { name: String },
-    NoKeyFound { key: String },
-}
-
-// TODO check if the preconditions are true for the action to commence.
-
 #[state_machine(initial = "State::idle()")]
 impl ActorStateMachine {
     #[state]
