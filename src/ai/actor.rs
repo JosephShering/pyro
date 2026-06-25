@@ -21,7 +21,7 @@ pub struct Actor {
     action_library: Option<Gd<ActionLibrary>>,
 
     #[export]
-    thinker: Option<DynGd<Node, dyn Thinker>>,
+    thinker: Option<DynGd<Resource, dyn Thinker>>,
 
     #[export]
     agent: Option<Gd<Node>>,
@@ -104,7 +104,7 @@ pub enum ActorEvent {
 
 struct ActorStateMachine {
     id: String,
-    thinker: DynGd<Node, dyn Thinker>,
+    thinker: DynGd<Resource, dyn Thinker>,
     action_library: Gd<ActionLibrary>,
     original_plan: Vec<String>,
     plan: VecDeque<String>,
